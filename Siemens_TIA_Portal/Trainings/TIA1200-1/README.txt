@@ -40,7 +40,7 @@ Introduce a modification to the pusher operation signaling program.
 Additionally: when the cylinder is in an end position (lower or upper) the lamp should flash at a frequency 1Hz
 
 #7 PROGRAM: End Position (FC004_EndPosition [FC7])
-Create a function block FC “Pozycja krańcowa” (End Position). Inside this block, prepare a program responsible for operating the pneumatic cylinders.
+Create a function block FC. Inside this block, prepare a program responsible for operating the pneumatic cylinders.
 
   - Pressing the ON button (I0.1) causes Cylinder A (Q0.3) and Cylinder B (Q0.1) to extend
   - Cylinder B may extend only when Cylinder A reaches its upper position (and the ON button remains pressed)
@@ -49,16 +49,89 @@ Create a function block FC “Pozycja krańcowa” (End Position). Inside this b
 The cylinders can be retracted at any moment by pressing the OFF button (I0.0)
 
 #8 PROGRAM: Element Position Control (FC005_Element_Position_Control [FC8])
-Create a function block FC “Kontrola pozycji elementu” (Element Position Control). The inspection station consists of three presence sensors: P1 (I1.3), P2 (I1.4), and P3 (I1.5). Depending on the state of the sensor signals, activate the appropriate output indicating the inspection status:
+Create a function block FC. The inspection station consists of three presence sensors: P1 (I1.3), P2 (I1.4), and P3 (I1.5). Depending on the state of the sensor signals, activate the appropriate output indicating the inspection status:
 
   - When all sensors are HIGH, the detected part is correct — the lamp %Q0.4 should be continuously ON
   - When one sensor is missing (only two are HIGH), the lamp should flash at 2 Hz
   - When at most one sensor is HIGH, the lamp must remain OFF
 
 #9 PROGRAM: Gripper Control (FC006_Robot_Gripper_Control [FC9])
-Create a function block FC “Kontrola chwytaka robota” (Robot Gripper Control). Inside this block, prepare a program responsible for controlling the robot’s gripper %Q0.2. The device is operated using two physical input buttons: ON (%I0.1), OFF (%I0.0)
+Create a function block FC. Inside this block, prepare a program responsible for controlling the robot’s gripper %Q0.2. The device is operated using two physical input buttons: ON (%I0.1), OFF (%I0.0)
 
   - Pressing ON closes the gripper %Q0.2.
   - Pressing OFF opens the gripper %Q0.2.
 
 The lamp %Q0.4 should turn ON when the gripper is correctly closed
+
+#10 PROGRAM: Modification – Robot Gripper Control (FC006_Robot_Gripper_Control#2 [FC10])
+Modify the program in the block FC Robot Gripper Control. Use an appropriate SR/RS latch (set–reset flip‑flop) block to control the state of the gripper
+
+#11 PROGRAM: Pneumatic Lift (FC007_Pneumatic_Lift [FC11])
+Create a function block FC “Pneumatic Lift”. Pressing the switch I1.3 initiates the extension of Cylinder A (Q0.3). The cylinder must stop when the upper position sensor (I0.6) becomes active. Similarly, in the opposite direction, the signal I1.4 starts the retraction of Cylinder A (Q0.0), and the stopping condition is the lower position sensor (I0.3) going HIGH
+
+#12 PROGRAM: Alarm Handling (FC008_Alarms_Handling [FC12])
+Create a function block FC “Alarm Handling”.
+Inside this block, implement a mechanism for handling alarm conditions. The following signals must be monitored:
+
+| Signal Name        | Address | Normal Operating State  |
+|--------------------|---------|-------------------------|
+| Fuse               | %I1.0   | 1                       |
+| Motor Temperature  | %I1.1   | 1                       |
+| Pusher Interlock   | %I1.2   | 0                       |
+| Pressure OK        | %I1.3   | 0                       |
+
+The alarm is reset using the button %I1.5. The lamp %Q0.4 indicates the system state:
+
+When the alarm and its cause are active, the lamp should flash at 5 Hz. When the alarm is active but the cause has cleared, the lamp should flash at 1 Hz (indicating readiness for operator reset). When no alarm is present, the lamp should remain continuously ON
+
+#13 PROGRAM: Automatic Cycle (FC009_Auto_Cycle [FC13])
+Create a function block FC “Automatic Cycle”. This block is responsible for controlling the cylinders and the gripper. The sequence of the cycle is as follows:
+
+STAGE 1 — Single Cycle
+Step 1: Pressing the green button (%I0.1) closes the gripper (%Q0.2).
+Step 2: A closed gripper (%I0.5) triggers the extension of Cylinder A (%Q0.3).
+Step 3: Reaching the upper position of Cylinder A (%I0.6) triggers the extension of Cylinder B (%Q0.1).
+Step 4: When both cylinders are extended, open the gripper (%Q0.2).
+Step 5: Opening the gripper (%I0.5) triggers the retraction of Cylinder B (%Q0.5).
+Step 6: Reaching the lower position of Cylinder B (%I0.7) triggers the retraction of Cylinder A (%Q0.0).
+
+STAGE 2 — Automatic Operation
+Automate the cycle: After pressing the green button (%I0.1), the program should continuously repeat steps 1–6 in a loop. Pressing the red button (%I0.0) must allow the system to finish the current cycle and then stop automatic operation.
+
+#14 PROGRAM: One Button – One Lamp (FC010_OneButton_OneLight [FC14])
+Create a function block FC “One Button – One Lamp”. The program should operate as follows:
+
+If the lamp %Q0.4 is OFF, pressing the Start button (%I0.1) should turn it ON
+If the lamp %Q0.4 is ON, pressing the Start button (%I0.1) should turn it OFF
+
+#15 PROGRAM: Voltage Control (FC011_Voltage_Control [FC15])
+Create a function block FC “Voltage Control”. The analog output range displayed on QW80 is from 0 V to 10 V. To control the analog output voltage, you must generate an INT value in the range 0 to 27648 (where 27648 is the scaling constant). Relationship between PLC value and output voltage:
+
+INT = 0 → 0 V
+INT = 27648 → 10 V
+
+Depending on the state of inputs I1.0 and I1.1, generate the appropriate output voltage:
+
+I1.0 = TRUE or I1.1 = TRUE → QW80 = 5 V
+I1.0 = TRUE and I1.1 = TRUE → QW80 = 10 V
+No active input → QW80 = 0 V
+
+#16 PROGRAM: Calculations (FC012_Calculations [FC16])
+Create a function block FC "Calculations".
+Write a program that performs the following operations:
+
+Production status from two production lines:
+Status = Sum1 + Sum2 - Losses
+
+Increase the parameter Sum by the value of parameter ParAdd each time the operator presses the green button:
+Sum = Sum + ParAdd
+
+Ensure that the value of ParAdd is within the range from 1 to 4
+
+#17 PROGRAM: Labeling Machine Handling (FC013_Labeler_Control [FC17])
+Create a function block FC "Labeling Machine Handling". When a new roll is installed, the operator loads its length using the parameter Dl_Roll (the roll length is given in millimeters, for example 5000 mm).
+Each time the operator presses the button I0.1, the stepper motor advances the roll by the length defined in the parameter Dl_Label (given in millimeters, for example 200 mm for a PET bottle label).
+The operator replaces the roll and confirms the replacement using the button I1.0. Prepare a program that: monitors the number of bottles with a label applied (piece counter), monitors the roll state (number of labels remaining on the active roll), stores the number of used rolls (roll counter), and implements appropriate protections (for example: prevention of negative roll values).
+Additionally: the lamp %Q0.4 should flash when the roll is close to the end (less than 3 labels remaining)
+
+
