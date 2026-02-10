@@ -134,4 +134,77 @@ Each time the operator presses the button I0.1, the stepper motor advances the r
 The operator replaces the roll and confirms the replacement using the button I1.0. Prepare a program that: monitors the number of bottles with a label applied (piece counter), monitors the roll state (number of labels remaining on the active roll), stores the number of used rolls (roll counter), and implements appropriate protections (for example: prevention of negative roll values).
 Additionally: the lamp %Q0.4 should flash when the roll is close to the end (less than 3 labels remaining)
 
+#18 PROGRAM: Buffer Filling (FC014_Buffer_Filling [FC18])
+Create a function block FC "Buffer Filling". The sensor I1.3 returns a HIGH state when a new bottle enters the buffer. The exit of a bottle from the buffer is signaled by a HIGH state on input I1.5. The lamp %Q0.4 indicates the buffer status:
+
+  - Lamp OFF when the buffer is empty
+  - Lamp flashes at 1 Hz when the number of bottles in storage is greater than 0 and less than 7
+  - Lamp flashes at 5 Hz when the buffer is almost full (7–9 bottles)
+  - Lamp is continuously ON when the buffer is full (10 bottles)
+
+Use an appropriate counter and comparators. Use input %I0.0 to reset the counter. Additionally: prevent the counter value from increasing when the buffer is already full
+
+#19 PROGRAM: Lift Sequence (FC015_Lift_Sequence [FC19])
+Create a function block FC "Lift Sequence". Pressing the ON button %I0.1 advances the system to the next step of the sequence, implemented through a counter mechanism. Depending on the current program number, execute the appropriate sequence operation.
+
+
+| Program Number | Operation                               |
+|----------------|-----------------------------------------|
+| 1              | Closing the gripper %Q0.2               |
+| 2              | Extending Cylinder A %Q0.3              |
+| 3              | Extending Cylinder B %Q0.1              |
+| 4              | Opening the gripper %Q0.2               |
+| 5–7            | Lamp flashing at 2 Hz                   |
+| 8–10           | Retracting Cylinder B %Q0.5             |
+| 11             | Retracting Cylinder A %Q0.0             |
+| 12             | Lamp flashing at 2 Hz                   |
+| 13             | End of sequence – counter reset         |
+
+#20 PROGRAM: Pulse Generator (FC016_Pulse_Generator [FC20])
+Create a function block FC "Pulse Generator". Pressing the ON button %I0.1 starts the operation of the pulse generator. Pressing the OFF button %I0.0 deactivates the pulse generator. The generator output should be indicated by the lamp %Q0.4. Additionally: The ON time (T_ON) and OFF time (T_OFF) parameters should be set using variables stored in a data block (DB).
+
+#21 PROGRAM: Motor with Cooling (FC017_Motor_With_Cooling [FC21])
+Create a function block FC "Motor with Cooling". The program consists of several stages:
+
+PHASE 1 – Motor Control
+Starting the motor %Q0.4 is performed by pressing the green button %I0.1 for at least two seconds. This is required as protection against accidental activation. The motor can be stopped using the red button %I0.0.
+
+PHASE 2 – Fan Control
+The cooling fan is connected to output %Q0.2. The fan starts at the same moment as the motor, but it should turn off six seconds after the motor is stopped.
+
+PHASE 3 – Emergency Stop
+Program the emergency stop switch. Pressing the E‑STOP button %I0.2 must immediately stop both the motor and the fan and generate an alarm. The alarm must be reset using the Reset input %I1.5.
+
+#22 PROGRAM: Cylinder Timeout (FC018_Cylinder_Timeout [FC22])
+Create a function block FC "Cylinder Timeout". Pressing the green button I0.1 should start the upward movement of Cylinder A (toward its upper sensor). Pressing the red button I0.0 should start the downward movement of Cylinder A (toward its lower sensor). If the movement in either direction exceeds 2 seconds, an alarm must be activated and the movement must stop. While the alarm is active, the lamp should flash at a frequency of 1 Hz.
+Before the program can operate again, the alarm must be reset using the button I1.5.
+
+#23 PROGRAM: End Position – Part II (FC004_EndPosition#2 [FC23])
+Modify the function block FC "End Position". Reaching the upper positions of both cylinders should cause the gripper to close. When both cylinders return to their lower positions, the gripper should open automatically.
+Additionally, the operator may close the gripper at any moment using the button I1.0. However, if the cylinders return to their lower positions, opening the gripper can also be done manually using the button I1.1.
+Add protection to ensure that the gripper can only be opened when both cylinders are in their lower positions.
+
+#24 PROGRAM: Manual Sequence (FC019_Manual_Sequence [FC24])
+Create a new function block FC "Manual Sequence".Write the following program:
+
+  - Pressing button I1.0 extends Cylinder A and turns on the lamp.
+  - Pressing button I1.1 extends Cylinder B and closes the gripper.
+  - Pressing button I1.2 opens the gripper and turns off the lamp.
+  - Pressing button I1.3 retracts the cylinders.
+
+Additionally, ensure that the next step can only begin after the previous step has been correctly completed (verified by the appropriate sensor states).
+
+#25 PROGRAM: Three Production Lines (FC020_Three_Production_Lines [FC25])
+Create a new function block FC "Three Production Lines". The plant has three production lines, each manufacturing different automotive components. Line 1 produces 5 parts per second, line 2 produces 10 parts per second, and line 3 produces 1 part per second. The profit per part is as follows: 4 for line 1, 3 for line 2, and 39 for line 3.
+Write a program that stores the number of parts produced by each production line and calculates the total profit of the plant.
+
+Production reset (clearing part counts and profit) is activated using the red button I0.0.
+
+#26 PROGRAM: Packaging Control (FC021_Packaging_Control [FC26])
+Create a new function block FC "Packaging Control". Every 1 second a new bottle exits the production line. The bottles are packed by a robot into a carton that holds 24 units (6 rows × 4 bottles).
+Write a program that stores:
+
+  - the current number of bottles inside the carton,
+  - the current row number being filled,
+  - the total number of fully packed cartons
 
