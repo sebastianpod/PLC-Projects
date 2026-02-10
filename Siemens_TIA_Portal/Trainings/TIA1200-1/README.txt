@@ -1,4 +1,4 @@
-This folder contains all exercises and project files created during the Siemens TIA Portal – Level 1 training.
+This folder contains all exercises and project file created during the Siemens TIA Portal – Level 1 training.
 The goal of this section is to provide a clear structure for each task, along with translated instructions and clean project files that can be easily opened, reviewed, or reused.
 
 The list below includes all exercises. After each task name, a pair of parentheses will contain the exact TIA Portal function/block name where the solution is implemented
